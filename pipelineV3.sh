@@ -32,9 +32,9 @@ touch $HOME"/ICA1/allQcReport"
 
 cp -r /localdisk/data/BPSM/ICA1/fastq/* $fastq_addresss
 echo "Copy finished!"
-# Read and store the sample name into samplename
+# Read and store the sample name into a file called samplename
 ls $fastq_addresss | grep ".gz$" | awk -F "_" '!a[$1]++{print $1}' > $sn_address
-
+# qc
 for i in {1..48}
 do 
 name=$(cat $sn_address | sed -n $i'p')
@@ -44,7 +44,7 @@ fastqc $fastq_addresss$name"_1.fq" -q -o $qc_address
 fastqc $fastq_addresss$name"_2.fq" -q -o $qc_address
 done
 echo "QC finished!"
-
+# write a overall QC report
 echo -e "Basic Statistics\tPer base sequence quality\tPer sequence quality scores\tPer base sequence content\tPer base N content \n" > $HOME"/ICA1/allQcReport"
 for i in {1..48}
 do 
@@ -66,13 +66,11 @@ echo "QC report generated!"
 #------------------------Alignment------------------
 
 #build the index of Trypanosoma congolense
-
 cp "/localdisk/data/BPSM/ICA1/Tcongo_genome/"$genome $index_address
 gunzip $index_address$genome
 # build index
 bowtie2-build -q $index_address"TriTrypDB-46_TcongolenseIL3000_2019_Genome.fasta" $index_address"TriTryp"
 #alignment
-
 for i in {1..48}
 do 
 name=$(cat $sn_address | sed -n $i'p')
@@ -101,6 +99,8 @@ time=("0" "24" "48")
 treat=("Induced" "Uninduced")
 
 # Group according to the treatment method, and store the sample name under each group
+# totally, there are 15 groups: 3 X 3 X 2 -3 
+# Since for Clone1, Clonee, WT with 0 hour, there is no Induced
 for item in ${clone[@]}
 do 
     for hour in ${time[@]}
@@ -116,7 +116,7 @@ done
 rm -f $group_address"Clone1_0_Induced"
 rm -f $group_address"WT_0_Induced"
 rm -f $group_address"Clone2_0_Induced"
-
+# This array is used to create a 0 array with the gene count length
 ref_arr=($(cat $bed_ref | cut -f 1))
 all_group_file=($(ls $group_address))
 
